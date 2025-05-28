@@ -1,135 +1,112 @@
 <!DOCTYPE html>
-<html>
+<html lang="ja">
 <head>
-  <meta charset="UTF-8">
-  <title>蚕育成シミュレーション</title>
+  <meta charset="UTF-8" />
+  <title>かいこ育成シミュレーション</title>
   <style>
     body {
-      font-family: 'Hiragino Maru Gothic Pro', 'ヒラギノ丸ゴ Pro W4', sans-serif;
+      font-family: "Hiragino Maru Gothic Pro", sans-serif;
       text-align: center;
-      background-color: #fefae0;
+      background-color: #fdfaf5;
     }
+
     #silkworm {
       height: 200px;
       margin: 20px;
-      transition: transform 0.3s;
+      transition: transform 0.2s;
     }
+
     button {
       padding: 10px 20px;
       margin: 10px;
       font-size: 16px;
       cursor: pointer;
     }
-    #evolutionSmoke {
-      position: absolute;
+
+    #message {
+      font-size: 20px;
+      margin: 15px;
+      height: 24px;
+    }
+
+    video#effect {
+      position: fixed;
       top: 0;
       left: 0;
-      width: 100%;
-      height: 100%;
+      width: 100vw;
+      height: 100vh;
+      z-index: 10;
       display: none;
       object-fit: cover;
-      z-index: 10;
-    }
-    #nameInputDiv {
-      margin-top: 20px;
-    }
-    #message {
-      margin-top: 15px;
-      font-weight: bold;
+      pointer-events: none;
     }
   </style>
 </head>
 <body>
-  <h1>蚕育成シミュレーション</h1>
-  <div id="nameInputDiv">
-    <label for="nameInput">かいこの名前：</label>
-    <input type="text" id="nameInput" placeholder="かいこちゃん">
-    <button onclick="setName()">決定</button>
-  </div>
-
-  <h2 id="kaiName">あなたのかいこちゃん</h2>
-
-  <img id="silkworm" src="./images/larvae.png" alt="silkworm">
-
+  <h1>かいこ育成シミュレーション</h1>
+  <p id="message"></p>
+  <img id="silkworm" src="./images/larva.png" />
   <div>
-    <button onclick="stroke(this)">なでる</button>
-    <button onclick="feed(this)">餌をあげる</button>
+    <button onclick="interact('stroke')">なでる</button>
+    <button onclick="interact('feed')">餌をあげる</button>
   </div>
 
-  <video id="evolutionSmoke" muted>
-    <source src="./videos/smoke.webm" type="video/webm">
-    <source src="./videos/smoke.mp4" type="video/mp4">
-  </video>
-
-  <div id="message"></div>
-
+  <video id="effect" src="./videos/smoke.mp4" autoplay muted></video>
   <audio id="sound" src="./sounds/sound.mp3"></audio>
 
   <script>
     let points = 0;
-    let currentStage = "larvae";
-    let kaiName = "かいこちゃん";
+    let stage = "larva"; // larva → pupa → moth
     let isEvolving = false;
+    let silkwormName = prompt("かいこの名前をつけてください！");
+    if (!silkwormName) silkwormName = "かいこちゃん";
 
-    function setName() {
-      const input = document.getElementById("nameInput").value.trim();
-      if (input) {
-        kaiName = input;
-        document.getElementById("kaiName").innerText = `${kaiName}`;
+    const silkworm = document.getElementById("silkworm");
+    const message = document.getElementById("message");
+    const effect = document.getElementById("effect");
+    const sound = document.getElementById("sound");
+
+    function interact(action) {
+      if (isEvolving) return;
+
+      sound.currentTime = 0;
+      sound.play();
+
+      silkworm.src = `./images/${stage}_happy.png`;
+      setTimeout(() => {
+        silkworm.src = `./images/${stage}.png`;
+      }, 1000);
+
+      points++;
+      checkEvolution();
+    }
+
+    function checkEvolution() {
+      if (stage === "larva" && points >= 5) {
+        evolveTo("pupa");
+      } else if (stage === "pupa" && points >= 10) {
+        evolveTo("moth", true);
       }
     }
 
-    function stroke(button) {
-      if (isEvolving) return;
-      interact("stroke", button);
-    }
-
-    function feed(button) {
-      if (isEvolving) return;
-      interact("feed", button);
-    }
-
-    function interact(action, button) {
-      button.disabled = true;
-      document.getElementById("sound").play();
-
-      let happyImg = `./images/${currentStage}_happy.png`;
-      let normalImg = `./images/${currentStage}.png`;
-
-      const silkworm = document.getElementById("silkworm");
-      silkworm.src = happyImg;
-      setTimeout(() => {
-        silkworm.src = normalImg;
-        button.disabled = false;
-      }, 1000);
-
-      addPoint();
-    }
-
-    function addPoint() {
-      if (points >= 15) return;
-      points++;
-      if (points === 5) evolve("pupa");
-      if (points === 10) evolve("moth");
-      if (points === 15) document.getElementById("message").innerText = "\u6700\u5927\u307e\u3067\u6210\u9577\u3057\u307e\u3057\u305f\uff01";
-    }
-
-    function evolve(nextStage) {
+    function evolveTo(nextStage, final = false) {
       isEvolving = true;
-      document.getElementById("message").innerText = `おや？${kaiName}のようすが……`;
-
-      const video = document.getElementById("evolutionSmoke");
-      video.style.display = "block";
-      video.play();
+      message.textContent = `おや？${silkwormName}のようすが、、、`;
 
       setTimeout(() => {
-        currentStage = nextStage;
-        document.getElementById("silkworm").src = `./images/${currentStage}.png`;
-        video.style.display = "none";
-        isEvolving = false;
-        document.getElementById("message").innerText = "";
-      }, 3000);
+        effect.style.display = "block";
+        effect.play();
+
+        effect.onended = () => {
+          silkworm.src = `./images/${nextStage}.png`;
+          effect.style.display = "none";
+          message.textContent = final ? "最大まで成長しました！" : "";
+          stage = nextStage;
+          isEvolving = false;
+        };
+      }, 2000);
     }
   </script>
 </body>
 </html>
+
