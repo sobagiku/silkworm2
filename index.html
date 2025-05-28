@@ -91,22 +91,32 @@
 
     function evolveTo(nextStage, final = false) {
       isEvolving = true;
+
+      // 1. メッセージを表示して少し待つ
       message.textContent = `おや？${silkwormName}のようすが、、、`;
 
       setTimeout(() => {
+        // 2. 動画表示
         effect.style.display = "block";
+        effect.currentTime = 0;
         effect.play();
 
+        // 3. 動画が終わったら進化
         effect.onended = () => {
           silkworm.src = `./images/${nextStage}.png`;
-          effect.style.display = "none";
-          message.textContent = final ? "最大まで成長しました！" : "";
           stage = nextStage;
           isEvolving = false;
+          effect.style.display = "none";
+
+          // 4. 最終進化ならメッセージを出す
+          if (final) {
+            message.textContent = "最大まで成長しました！";
+          } else {
+            message.textContent = "";
+          }
         };
-      }, 2000);
+      }, 2000); // ←「おや？」を2秒見せる
     }
   </script>
 </body>
 </html>
-
