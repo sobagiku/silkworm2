@@ -10,6 +10,12 @@
       background-color: #fdfaf5;
     }
 
+    #nameDisplay {
+      font-size: 24px;
+      font-weight: bold;
+      margin-top: 20px;
+    }
+
     #silkworm {
       height: 200px;
       margin: 20px;
@@ -44,6 +50,7 @@
 </head>
 <body>
   <h1>かいこ育成シミュレーション</h1>
+  <div id="nameDisplay"></div>
   <p id="message"></p>
   <img id="silkworm" src="./images/larva.png" />
   <div>
@@ -52,30 +59,40 @@
   </div>
 
   <video id="effect" src="./videos/smoke.mp4" autoplay muted></video>
-  <audio id="sound" src="./sounds/sound.mp3"></audio>
+
+  <audio id="strokeSound" src="./sounds/stroke.mp3"></audio>
+  <audio id="feedSound" src="./sounds/feed.mp3"></audio>
+  <audio id="evoSound" src="./sounds/shinka.mp3"></audio>
 
   <script>
     let points = 0;
     let stage = "larva"; // larva → pupa → moth
     let isEvolving = false;
+
     let silkwormName = prompt("かいこの名前をつけてください！");
     if (!silkwormName) silkwormName = "かいこちゃん";
 
+    const nameDisplay = document.getElementById("nameDisplay");
     const silkworm = document.getElementById("silkworm");
     const message = document.getElementById("message");
     const effect = document.getElementById("effect");
-    const sound = document.getElementById("sound");
+    const strokeSound = document.getElementById("strokeSound");
+    const feedSound = document.getElementById("feedSound");
+    const evoSound = document.getElementById("evoSound");
+
+    nameDisplay.textContent = `名前：${silkwormName}`;
 
     function interact(action) {
       if (isEvolving) return;
 
-      sound.currentTime = 0;
-      sound.play();
+      const soundToPlay = action === "stroke" ? strokeSound : feedSound;
+      soundToPlay.currentTime = 0;
+      soundToPlay.play();
 
       silkworm.src = `./images/${stage}_happy.png`;
       setTimeout(() => {
         silkworm.src = `./images/${stage}.png`;
-      }, 1000);
+      }, 2000); // 2秒に延長
 
       points++;
       checkEvolution();
@@ -91,31 +108,29 @@
 
     function evolveTo(nextStage, final = false) {
       isEvolving = true;
-
-      // 1. メッセージを表示して少し待つ
       message.textContent = `おや？${silkwormName}のようすが、、、`;
 
       setTimeout(() => {
-        // 2. 動画表示
         effect.style.display = "block";
         effect.currentTime = 0;
         effect.play();
 
-        // 3. 動画が終わったら進化
+        evoSound.currentTime = 0;
+        evoSound.play();
+
         effect.onended = () => {
           silkworm.src = `./images/${nextStage}.png`;
           stage = nextStage;
-          isEvolving = false;
           effect.style.display = "none";
+          isEvolving = false;
 
-          // 4. 最終進化ならメッセージを出す
           if (final) {
-            message.textContent = "最大まで成長しました！";
+            message.textContent = `${silkwormName}は成虫になったよ！最大まで成長しました！`;
           } else {
-            message.textContent = "";
+            message.textContent = `${silkwormName}はさなぎになったよ！`;
           }
         };
-      }, 2000); // ←「おや？」を2秒見せる
+      }, 2000);
     }
   </script>
 </body>
